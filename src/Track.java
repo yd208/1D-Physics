@@ -137,6 +137,7 @@ public class Track extends Canvas implements Runnable {
 			{
 				Vector direction1 = new Vector(c.getDirection(), car.getDirection());
 				//Vector direction2 = new Vector();
+				//Comment
 			}
 			else if(c.getXcor() <= (car.getXcor() + 34))
 			{
