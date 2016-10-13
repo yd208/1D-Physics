@@ -14,12 +14,13 @@ public class Track extends Canvas implements Runnable {
 	private static JFrame myFrame;
 	private Thread thread;
 	private Dimension size;
-	private static Vector gravity = new Vector(1.05, 0);
+	//Standard Gravity is 1.05
+	private static Vector gravity = new Vector(0, 0);
+	//Standard Friction is .96
 	private double friction;
-	private double wall_friction;
 	@SuppressWarnings("unused")
 	private boolean reverse_dir = false;
-	private ArrayList<Car> cars = new ArrayList<Car>();
+	private ArrayList<Entity> cars = new ArrayList<Entity>();
 	
 	public Track()
 	{
@@ -33,8 +34,7 @@ public class Track extends Canvas implements Runnable {
 		myFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		myFrame.setLocationRelativeTo(null);
 		
-		wall_friction = .7;
-		friction = .96;
+		friction = 1;
 		loadCars(2);
 	}
 	
@@ -44,15 +44,24 @@ public class Track extends Canvas implements Runnable {
 		{
 			addCar((i + 5) * 40, 60);
 			if(i % 2 == 0)
-			cars.get(i).setColor(Color.RED);
+			{
+				cars.get(i).setColor(Color.RED);
+				cars.get(i).setDirection(new Vector(0, 0));
+				cars.get(i).setVelocity(15);
+			}
 			else
-			cars.get(i).setColor(Color.BLUE);
+			{
+				cars.get(i).setColor(Color.BLUE);
+				cars.get(i).setDirection(new Vector(0, Math.PI));
+			}
 			//cars.get(i).setVelocity(Math.random() * 10);
 		}	
 	}
 	
+	//**************************************************Entity Interactions and Physics***************************************
+	
 	//Calculates the velocity and direction of the cars
-	public void calcVelocity(Car car)
+	public void calcVelocity(Entity car)
 	{
 		Vector final_vel = new Vector(0, 0);
 		Vector avg_vel = new Vector(0, 0);
@@ -95,18 +104,18 @@ public class Track extends Canvas implements Runnable {
 			
 		if((car.getXcor()+ 36) > size.getWidth())
 		{
-			avg_vel.setMagnitude(avg_vel.getMagnitude() * wall_friction);
+			avg_vel.setMagnitude(avg_vel.getMagnitude() * car.getElasticity());
 			avg_vel.setAngle(Math.PI);
-			final_vel.setMagnitude(final_vel.getMagnitude() * wall_friction);
+			final_vel.setMagnitude(final_vel.getMagnitude() * car.getElasticity());
 			final_vel.setAngle(Math.PI);
 			car.setXcor(size.getWidth() - 36);
 			reverse_dir = true;
 		}
 		else if(car.getXcor() < 0)
 		{
-			avg_vel.setMagnitude(avg_vel.getMagnitude() * wall_friction);
+			avg_vel.setMagnitude(avg_vel.getMagnitude() * car.getElasticity());
 			avg_vel.setAngle(0);
-			final_vel.setMagnitude(final_vel.getMagnitude() * wall_friction);
+			final_vel.setMagnitude(final_vel.getMagnitude() * car.getElasticity());
 			final_vel.setAngle(0);
 			car.setXcor(0);
 			reverse_dir = false;
@@ -129,13 +138,13 @@ public class Track extends Canvas implements Runnable {
 	}
 	
 	//Calculates collisions between cars
-	public void calcCollisions(Car car)
+	public void calcCollisions(Entity car)
 	{
-		for(Car c: cars)
+		for(Entity c: cars)
 		{
 			if((c.getXcor() + 34) >= car.getXcor())
 			{
-				Vector direction1 = new Vector(c.getDirection(), car.getDirection());
+				//Vector direction1 = new Vector(c.getDirection(), car.getDirection());
 				//Vector direction2 = new Vector();
 				//Comment
 			}
@@ -146,17 +155,27 @@ public class Track extends Canvas implements Runnable {
 		}
 	}
 	
+	//************************************************Drawing Graphics*******************************************
+	
+	//Draw cars and background
 	public void paint(Graphics g)
 	{
 		 g.clearRect(0, 0, size.width, size.height);
 	     background(g);
-	     for(Car c: cars)
+	     //drawGuiControls(g);
+	     for(Entity c: cars)
 	     {
 	    	calcVelocity(c);
-	    	c.drawCar(g);
+	    	c.drawEntity(g);
 	     }
 	}
 	
+	public void drawCursor()
+	{
+		
+	}
+	
+	//Updates the screen using an image buffer
 	public void update(Graphics g)
 	{
 		Graphics offScreenGraphics;
@@ -186,6 +205,9 @@ public class Track extends Canvas implements Runnable {
 		cars.add(car);
 	}
 	
+	
+	//**********************************Track Getters and Setters********************************************
+	
 	//Set track friction
 	public void setFriction(double f){friction = f;}
 	
@@ -197,6 +219,18 @@ public class Track extends Canvas implements Runnable {
 	
 	//Get track friction
 	public double getFriction(){return friction;}
+	
+	
+	//**********************************Thread and Track Initialization****************************************
+	public void addToFrame(Track track)
+	{
+		myFrame.add(track);
+	}
+	
+	public void startThread() {
+		thread = new Thread(this, "Display");
+		thread.start();
+	}
 	
 	@Override
 	public void run() {
@@ -210,15 +244,5 @@ public class Track extends Canvas implements Runnable {
 			}
 			repaint();
 		}
-	}
-	
-	public void addToFrame(Track track)
-	{
-		myFrame.add(track);
-	}
-	
-	public void startThread() {
-		thread = new Thread(this, "Display");
-		thread.start();
 	}
 }
