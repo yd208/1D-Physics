@@ -38,4 +38,12 @@ public class Car extends Entity {
 		g.fillRect((int)xcor, (int)ycor, 30, 80);
 	}
 	
+	@Override
+	public void drawCursor(Graphics g, double x, double y)
+	{
+		g.setColor(Color.WHITE);
+		g.drawLine((int)(xcor + 15), 100, (int)x, (int)y - 30);
+		System.out.println("xcor: " +(int)(xcor + 15) + ", ycor: " + 140 + ", x: " + (int)x + ", y: " + (int)y);
+	}
+	
 }

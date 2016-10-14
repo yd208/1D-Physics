@@ -31,5 +31,11 @@ public class HollowCar extends Entity {
 	public void drawEntity(Graphics g) {
 		
 	}
+	
+	@Override
+	public void drawCursor(Graphics g, double x, double y)
+	{
+		
+	}
 
 }

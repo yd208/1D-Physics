@@ -24,11 +24,14 @@ public class Track extends JFrame {
 	
 	private Thread thread;
 	private Dimension size;
+	private EventHandler myHandler;
 	private Entity selectedObject = null;
 	//Standard Gravity is 1.05
 	private static Vector gravity = new Vector(0, 0);
 	//Standard Friction is .96
 	private double friction;
+	private double mouseX;
+	private double mouseY;
 //	private double mouseX = 0;
 	@SuppressWarnings("unused")
 	private boolean reverse_dir = false;
@@ -38,8 +41,10 @@ public class Track extends JFrame {
 	{
 		size = new Dimension(800, 200);
 		DrawingSurface myCanvas = new DrawingSurface();
-	
+
 		add(createGUIControls());
+		myCanvas.addMouseListener(myHandler);
+		myCanvas.addMouseMotionListener(myHandler);
 		setTitle("Track");
 		setPreferredSize(size);
 		setResizable(false);
@@ -50,13 +55,13 @@ public class Track extends JFrame {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setLocationRelativeTo(null);
 		
-		friction = 1;
+		friction = .96;
 		loadCars(2);
 	}
 	
 	public JPanel createGUIControls()
 	{
-		EventHandler myHandler = new EventHandler();
+		myHandler = new EventHandler();
 		
 		JPanel panel = new JPanel();
 		panel.setBounds(new Rectangle((int) size.getWidth(), 35));
@@ -143,12 +148,11 @@ public class Track extends JFrame {
 	    {
 	    	System.out.println("position: " + e.getX());
 	    	selectedObject = findObjects(e.getX());
-	    
 	    	if(selectedObject != null)
 	    	{
-	    		selectedObject.color = Color.RED;
+	    		mouseX = e.getX();
+	    		mouseY = e.getY();
 	    	}
-	    	
 	    	e.consume();
 	    }
 	    
@@ -157,32 +161,22 @@ public class Track extends JFrame {
 	    {
 	    	if(selectedObject != null)
 	    	{
-	    		selectedObject.setXcor(e.getX());
+	    		mouseX = e.getX();
+	    		mouseY = e.getY();
 	    	}
-	    	
 	    	e.consume();
 	    }
 	    
 	    @Override
 	    public void mouseReleased(MouseEvent e)
 	    {
-	    	if(selectedObject != null)
-	    	{
-	    		selectedObject.color = Color.BLACK;
-	    		//double dx = e.getPoint().x - mouseX;
-	    		//selectedObject.getDirection().setAngle();
-	    		//selectedObject.setVelocity();
-	    		selectedObject.setXcor(e.getX());
-	    		//System.out.println("X: " + currentY + ", Y: " + currentX + ", ObjX: " + selectedObject.xcrd + ", ObjY: " + selectedObject.ycrd);
-	    		//System.out.println("Angle: " + Math.toDegrees(selectedObject.angle) + ", Speed: " + Math.toDegrees(selectedObject.speed));
-	    		//System.out.println("ANGLE: " + Math.toDegrees(Math.atan2(dy, dx)));
-	    	}
 	    	selectedObject = null;
 	    	e.consume();
 	    }
 	    
 	    public Entity findObjects(double x)
 	    {
+	    	System.out.println("Here");
 	    	for(Entity c: cars)
 	    	{
 	    		if(x >= c.getXcor() && x <= c.getXcor() + 30)
@@ -304,21 +298,18 @@ public class Track extends JFrame {
 		//Draw cars and background
 		public void paint(Graphics g)
 		{
-			 g.clearRect(0, 30, size.width, size.height - 20);
+			 g.clearRect(0, 0, size.width, size.height);
 		     background(g);
 		     //drawGuiControls(g);
 		     for(Entity c: cars)
 		     {
 		    	calcVelocity(c);
 		    	c.drawEntity(g);
+		    	if(selectedObject != null && c.equals(selectedObject))
+		    	{
+		    		c.drawCursor(g, mouseX, mouseY);
+		    	}
 		     }
-		}
-		
-		
-		@SuppressWarnings("unused")
-		public void drawCursor()
-		{
-			
 		}
 		
 		//Updates the screen using an image buffer
@@ -330,7 +321,7 @@ public class Track extends JFrame {
 			offScreen = new BufferedImage(size.width, size.height, BufferedImage.TYPE_INT_ARGB);
 			offScreenGraphics = offScreen.getGraphics();
 			offScreenGraphics.setColor(this.getBackground());
-			offScreenGraphics.fillRect(0, 30, size.width, size.height - 20);
+			offScreenGraphics.fillRect(0, 0, size.width, size.height);
 			offScreenGraphics.setColor(this.getForeground());
 			paint(offScreenGraphics);
 			
