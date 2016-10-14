@@ -2,40 +2,81 @@ import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 
+import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.JSlider;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
-public class Track extends Canvas implements Runnable {
+public class Track extends JFrame {
 
 	private static final long serialVersionUID = 1L;
-
-	private static JFrame myFrame;
+	
 	private Thread thread;
 	private Dimension size;
+	private Entity selectedObject = null;
 	//Standard Gravity is 1.05
 	private static Vector gravity = new Vector(0, 0);
 	//Standard Friction is .96
 	private double friction;
+//	private double mouseX = 0;
 	@SuppressWarnings("unused")
 	private boolean reverse_dir = false;
 	private ArrayList<Entity> cars = new ArrayList<Entity>();
 	
 	public Track()
 	{
-		size = new Dimension(800, 170);
-		myFrame = new JFrame("Track");
-		myFrame.setPreferredSize(size);
-		myFrame.setResizable(false);
-		myFrame.setBackground(Color.BLACK);
-		myFrame.pack();
-		myFrame.setVisible(true);
-		myFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		myFrame.setLocationRelativeTo(null);
+		size = new Dimension(800, 200);
+		DrawingSurface myCanvas = new DrawingSurface();
+	
+		add(createGUIControls());
+		setTitle("Track");
+		setPreferredSize(size);
+		setResizable(false);
+		setBackground(Color.BLACK);
+		add(myCanvas);
+		pack();
+		setVisible(true);
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		setLocationRelativeTo(null);
 		
 		friction = 1;
 		loadCars(2);
+	}
+	
+	public JPanel createGUIControls()
+	{
+		EventHandler myHandler = new EventHandler();
+		
+		JPanel panel = new JPanel();
+		panel.setBounds(new Rectangle((int) size.getWidth(), 35));
+		panel.setSize(new Dimension((int) size.getWidth(), 35));
+		
+		JButton button  = new JButton("Vel = 0");
+	    button.setSize(new Dimension(30, 18));
+	    button.setMaximumSize(getSize());
+		button.setSize(new Dimension(30, 20));
+		button.addActionListener(myHandler);
+		button.setActionCommand("Vel = 0");
+		panel.add(button);
+		
+		JSlider grav_slider = new JSlider(JSlider.HORIZONTAL, -2, 2, 0);
+		grav_slider.setPaintTicks(true);
+		grav_slider.setMajorTickSpacing(1);
+		grav_slider.addChangeListener(myHandler);
+		panel.add(grav_slider);
+		
+		return panel;
 	}
 	
 	public void loadCars(int num_cars)
@@ -47,7 +88,7 @@ public class Track extends Canvas implements Runnable {
 			{
 				cars.get(i).setColor(Color.RED);
 				cars.get(i).setDirection(new Vector(0, 0));
-				cars.get(i).setVelocity(15);
+				cars.get(i).setVelocity(5);
 			}
 			else
 			{
@@ -56,6 +97,101 @@ public class Track extends Canvas implements Runnable {
 			}
 			//cars.get(i).setVelocity(Math.random() * 10);
 		}	
+	}
+	
+	//**************************************************Event Listener*******************************************************
+	
+	private class EventHandler extends MouseAdapter implements ActionListener, ChangeListener, MouseMotionListener {
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			
+			if(e.getActionCommand() == "Vel = 0")
+			{
+				for(Entity c: cars)
+				{
+					c.setVelocity(0);
+				}
+				gravity = new Vector(0, 0);
+			}
+		}
+		
+		@Override
+		public void stateChanged(ChangeEvent e) {
+			JSlider source = (JSlider)e.getSource();
+		     if (source.getValueIsAdjusting()) {
+		        if(source.getValue() < 0)
+		        {
+		        	gravity = new Vector(-(source.getValue() - .05), Math.PI);
+		        }
+		        else if(source.getValue() > 0)
+		        {
+		        	gravity = new Vector(source.getValue() + .05, 0);
+		        }
+		        else
+		        {
+		        	gravity = new Vector(source.getValue(), 0);
+		        }
+		        
+		        System.out.println("Mag: " + gravity.getMagnitude() + ", Angle: " + gravity.getAngle());
+		     }
+			
+		}
+		
+		@Override
+	    public void mousePressed(MouseEvent e)
+	    {
+	    	System.out.println("position: " + e.getX());
+	    	selectedObject = findObjects(e.getX());
+	    
+	    	if(selectedObject != null)
+	    	{
+	    		selectedObject.color = Color.RED;
+	    	}
+	    	
+	    	e.consume();
+	    }
+	    
+	    @Override
+	    public void mouseDragged(MouseEvent e)
+	    {
+	    	if(selectedObject != null)
+	    	{
+	    		selectedObject.setXcor(e.getX());
+	    	}
+	    	
+	    	e.consume();
+	    }
+	    
+	    @Override
+	    public void mouseReleased(MouseEvent e)
+	    {
+	    	if(selectedObject != null)
+	    	{
+	    		selectedObject.color = Color.BLACK;
+	    		//double dx = e.getPoint().x - mouseX;
+	    		//selectedObject.getDirection().setAngle();
+	    		//selectedObject.setVelocity();
+	    		selectedObject.setXcor(e.getX());
+	    		//System.out.println("X: " + currentY + ", Y: " + currentX + ", ObjX: " + selectedObject.xcrd + ", ObjY: " + selectedObject.ycrd);
+	    		//System.out.println("Angle: " + Math.toDegrees(selectedObject.angle) + ", Speed: " + Math.toDegrees(selectedObject.speed));
+	    		//System.out.println("ANGLE: " + Math.toDegrees(Math.atan2(dy, dx)));
+	    	}
+	    	selectedObject = null;
+	    	e.consume();
+	    }
+	    
+	    public Entity findObjects(double x)
+	    {
+	    	for(Entity c: cars)
+	    	{
+	    		if(x >= c.getXcor() && x <= c.getXcor() + 30)
+	    		{
+	    			return c;
+	    		}
+	    	}
+			return null;
+	    }
 	}
 	
 	//**************************************************Entity Interactions and Physics***************************************
@@ -75,22 +211,19 @@ public class Track extends Canvas implements Runnable {
 		//Calculate car final velocity
 		if(direction.getAngle() > 0 && gravity.getAngle() == 0)
 		{
-			System.out.println("case 1");
 			final_vel = new Vector((car.getVelocity() * (1/car.getAcceleration())) * friction, direction.getAngle());
 		}
 		else if(direction.getAngle() > 0 && gravity.getAngle() > 0)
 		{
 			final_vel = new Vector((car.getVelocity() * car.getAcceleration()) * friction, direction.getAngle());
-			System.out.println("case 2| " + "accel: " + car.getAcceleration() + ", final_vel: " + final_vel.getMagnitude());
+			//System.out.println("case 2| " + "accel: " + car.getAcceleration() + ", final_vel: " + final_vel.getMagnitude());
 		}
 		else if(direction.getAngle() == 0 && gravity.getAngle() == 0)
 		{
-			System.out.println("case 3");
 			final_vel = new Vector((car.getVelocity() * car.getAcceleration()) * friction, direction.getAngle());
 		}
 		else
 		{
-			System.out.println("case 4");
 			final_vel = new Vector((car.getVelocity() * (1/car.getAcceleration())) * friction, direction.getAngle());
 		}
 	
@@ -120,9 +253,9 @@ public class Track extends Canvas implements Runnable {
 			car.setXcor(0);
 			reverse_dir = false;
 		}
-		System.out.println("final_vel mag: " + final_vel.getMagnitude() + ", final_vel angle: " + final_vel.getAngle());
+	/*	System.out.println("final_vel mag: " + final_vel.getMagnitude() + ", final_vel angle: " + final_vel.getAngle());
 		System.out.println("avg_vel mag: " + avg_vel.getMagnitude() + ", avg_vel angle: " + avg_vel.getAngle());
-		System.out.println("Xcor: " + car.getXcor());
+		System.out.println("Xcor: " + car.getXcor());*/
 		
 		//Calculate new car position using new velocity
 		direction = new Vector(avg_vel, gravity);
@@ -134,7 +267,7 @@ public class Track extends Canvas implements Runnable {
 		//Set car velocity to final velocity
 		car.setVelocity(Math.abs(direction.getMagnitude()));
 		
-		System.out.println("Direction mag: " + direction.getMagnitude() + ", Direction angle: " + direction.getAngle() + ", Second Xcor: " + car.getXcor());
+		//System.out.println("Direction mag: " + direction.getMagnitude() + ", Direction angle: " + direction.getAngle() + ", Second Xcor: " + car.getXcor());
 	}
 	
 	//Calculates collisions between cars
@@ -157,45 +290,73 @@ public class Track extends Canvas implements Runnable {
 	
 	//************************************************Drawing Graphics*******************************************
 	
-	//Draw cars and background
-	public void paint(Graphics g)
+	private class DrawingSurface extends Canvas implements Runnable
 	{
-		 g.clearRect(0, 0, size.width, size.height);
-	     background(g);
-	     //drawGuiControls(g);
-	     for(Entity c: cars)
-	     {
-	    	calcVelocity(c);
-	    	c.drawEntity(g);
-	     }
-	}
-	
-	public void drawCursor()
-	{
+
+		private static final long serialVersionUID = 1L;
+
+		public DrawingSurface()
+		{
+			thread = new Thread(this, "Display");
+			thread.start();
+		}
 		
-	}
-	
-	//Updates the screen using an image buffer
-	public void update(Graphics g)
-	{
-		Graphics offScreenGraphics;
-		BufferedImage offScreen = null;
+		//Draw cars and background
+		public void paint(Graphics g)
+		{
+			 g.clearRect(0, 30, size.width, size.height - 20);
+		     background(g);
+		     //drawGuiControls(g);
+		     for(Entity c: cars)
+		     {
+		    	calcVelocity(c);
+		    	c.drawEntity(g);
+		     }
+		}
 		
-		offScreen = new BufferedImage(size.width, size.height, BufferedImage.TYPE_INT_ARGB);
-		offScreenGraphics = offScreen.getGraphics();
-		offScreenGraphics.setColor(this.getBackground());
-		offScreenGraphics.fillRect(0, 0, size.width, size.height);
-		offScreenGraphics.setColor(this.getForeground());
-		paint(offScreenGraphics);
 		
-		g.drawImage(offScreen, 0, 0, this);
-	}
-	
-	//Draws black background of track
-	public void background(Graphics g)
-	{
-		g.setColor(Color.BLACK);
-		g.fillRect(0, 0, size.width, size.height);
+		@SuppressWarnings("unused")
+		public void drawCursor()
+		{
+			
+		}
+		
+		//Updates the screen using an image buffer
+		public void update(Graphics g)
+		{
+			Graphics offScreenGraphics;
+			BufferedImage offScreen = null;
+			
+			offScreen = new BufferedImage(size.width, size.height, BufferedImage.TYPE_INT_ARGB);
+			offScreenGraphics = offScreen.getGraphics();
+			offScreenGraphics.setColor(this.getBackground());
+			offScreenGraphics.fillRect(0, 30, size.width, size.height - 20);
+			offScreenGraphics.setColor(this.getForeground());
+			paint(offScreenGraphics);
+			
+			g.drawImage(offScreen, 0, 30, this);
+		}
+		
+		//Draws black background of track
+		public void background(Graphics g)
+		{
+			g.setColor(Color.BLACK);
+			g.fillRect(0, 30, size.width, size.height);
+		}
+		
+		@Override
+		public void run() {
+			while(true)
+			{
+				try {
+					Thread.currentThread();
+					Thread.sleep(50);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				repaint();
+			}
+		}
 	}
 	
 	//Add a car to the track
@@ -221,28 +382,4 @@ public class Track extends Canvas implements Runnable {
 	public double getFriction(){return friction;}
 	
 	
-	//**********************************Thread and Track Initialization****************************************
-	public void addToFrame(Track track)
-	{
-		myFrame.add(track);
-	}
-	
-	public void startThread() {
-		thread = new Thread(this, "Display");
-		thread.start();
-	}
-	
-	@Override
-	public void run() {
-		while(true)
-		{
-			try {
-				Thread.currentThread();
-				Thread.sleep(60);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			repaint();
-		}
-	}
 }

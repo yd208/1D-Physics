@@ -12,8 +12,8 @@ public class Vector {
 	public Vector(Vector v1, Vector v2)
 	{
 		//Angle is either 0 or PI 
-		System.out.println("--------------------New Vector--------------------------");
-		System.out.println("angle 1: " + Math.cos(v1.getAngle()) + ", angle 2: " + Math.cos(v2.getAngle()));
+	/*	System.out.println("--------------------New Vector--------------------------");
+		System.out.println("angle 1: " + Math.cos(v1.getAngle()) + ", angle 2: " + Math.cos(v2.getAngle()));*/
 		magnitude = Math.cos(v1.angle) * v1.magnitude + Math.cos(v2.angle) * v2.magnitude;
 		if(magnitude >= 0)
 			angle = 0;

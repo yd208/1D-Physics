@@ -8,8 +8,6 @@ public class Main {
 	{
 		track = new Track();
 		track.setVisible(true);
-		track.startThread();
-		track.addToFrame(track);
 	}
 	
 	public static void main(String[] args)
